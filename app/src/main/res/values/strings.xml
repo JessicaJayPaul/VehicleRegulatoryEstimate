@@ -1,0 +1,230 @@
+<resources>
+    <string name="app_name">旧车远程评估</string>
+    <string name="action_settings">settings</string>
+
+    <string name="vehicle_regulatory">Vehicle Regulatory</string>
+    <string name="estimate">Estimate</string>
+    <string name="account">账  号</string>
+    <string name="pwd">密  码</string>
+    <string name="login">登  陆</string>
+    <string name="remember">记住密码</string>
+
+    <string name="new_task">新增任务</string>
+    <string name="system_settings">系统设置</string>
+    <string name="exit_app">退   出</string>
+
+    <string name="base_0">基本信息</string>
+    <string name="base_1">车主姓名：</string>
+    <string name="base_2">车牌号：</string>
+    <string name="base_3">排量：</string>
+    <string name="base_4">功率：</string>
+    <string name="base_5">发动机号：</string>
+    <string name="base_6">环保标准：</string>
+    <string name="base_7">车架号：</string>
+    <string name="base_8">公里数:</string>
+    <string name="base_9">出厂日期：</string>
+    <string name="base_10">登记日期：</string>
+    <string name="base_11">厂牌型号：</string>
+    <string name="base_12">车辆类型：</string>
+    <string name="base_13">选择品牌：</string>
+    <string name="base_14">选择车系：</string>
+    <string name="base_15">选择车型：</string>
+    <string name="base_16">车辆使用性质：</string>
+    <string name="base_17">贷款城市：</string>
+    <string name="base_18">座位：</string>
+    <string name="base_19">提报人手机：</string>
+    <string name="base_20">预售价格：</string>
+
+    <string name="img_0">图像采集</string>
+    <string name="img_1">登记证照片：</string>
+    <string name="img_2">行驶证照片：</string>
+    <string name="img_3">铭牌照片：</string>
+    <string name="img_4">车身外观照片：</string>
+    <string name="img_5">车体骨架照片：</string>
+    <string name="img_6">车辆内饰照片：</string>
+    <string name="img_7">原车保险照片：</string>
+    <string name="img_8">差异补充</string>
+
+    <array name="img_tips_1">
+        <item>车辆信息</item>
+        <item>首页</item>
+    </array>
+    <array name="img_tips_2">
+        <item>行驶证</item>
+    </array>
+    <array name="img_tips_3">
+        <item>铭牌</item>
+    </array>
+    <array name="img_tips_4">
+        <item>车右后45度</item>
+        <item>车左前45度</item>
+        <item>后挡风玻璃</item>
+        <item>前挡风玻璃</item>
+    </array>
+    <array name="img_tips_5">
+        <item>后备箱底板、尾板</item>
+        <item>后盖含右后翼子板</item>
+        <item>后盖含左后翼子板</item>
+        <item>水箱支架右侧及右前大梁</item>
+        <item>水箱支架左侧及左前大梁</item>
+        <item>引擎室-防火墙</item>
+        <item>右后门含B、C柱</item>
+        <item>右前门含A柱</item>
+        <item>右前翼子板含减震座</item>
+        <item>左后门含B、C柱</item>
+        <item>左前门含A柱</item>
+        <item>左前翼子板含减震座</item>
+    </array>
+    <array name="img_tips_6">
+        <item>车顶棚</item>
+        <item>方向盘及仪表</item>
+        <item>后出风口</item>
+        <item>中控台含档位杆</item>
+        <item>左前门饰板</item>
+    </array>
+    <array name="img_tips_7">
+        <item>原车保险</item>
+    </array>
+
+    <string name="img_info_text_1_1_1">注意事项：
+①登记证第3、4页必须在同一照片内②登记证会自然闭合，请用手指按压使其平整（如图）
+③拍摄时应尽量选择光线柔和均匀下进行。如有强烈直射光，可使用遮挡的方法减弱强光
+④证件上的所有信息必须清晰可见，拍摄后请自行预览
+⑤如遇到印刷不清晰时，可局部多拍特写</string>
+    <string name="img_info_text_1_1_2">照片必须含有内容：
+①承保公司名称   ②保单号 ③被保险人  ④号牌号码  ⑤车架号  ⑥发动机号
+⑦保险时间  ⑧保险明细及金额</string>
+    <string name="img_info_text_1_2_1">注意事项：
+①登记证第1、2页必须在同一照片内
+②登记证会自然闭合，请用手指按压使其平整（如图）
+③拍摄时应尽量选择光线柔和均匀下进行。如有强烈直射光，可使用遮挡的方法减弱强光
+④证件上的所有信息必须清晰可见，拍摄后请自行预览⑤如遇到印刷不清晰时，可局部多拍特写</string>
+    <string name="img_info_text_1_2_2">照片必须含有内容：
+①注册登记摘要信息栏内所有信息
+②转移登记摘要信息栏内所有信息
+③注册登记机动车信息栏内所有信息</string>
+    <string name="img_info_text_2_1_1">注意事项：
+①登记证第1、2页必须在同一照片内
+②登记证会自然闭合，请用手指按压使其平整（如图）
+③拍摄时应尽量选择光线柔和均匀下进行。如有强烈直射光，可使用遮挡的方法减弱强光
+④证件上的所有信息必须清晰可见，拍摄后请自行预览
+⑤如遇到印刷不清晰时，可局部多拍特写</string>
+    <string name="img_info_text_2_1_2">照片必须含有内容：
+①注册登记摘要信息栏内所有信息  ②转移登记摘要信息栏内所有信息  ③注册登记机动车信息栏内所有信息</string>
+    <string name="img_info_text_3_1_1">注意事项：
+①不同的车铭牌的位置不同，比较常贴铭牌的地方：副驾驶打开车门B柱下方；引擎室内；副驾驶座位下方（有可能被脚垫覆盖）；
+②如无法找到铭牌或铭牌拍摄难度大，请进行系统申报</string>
+    <string name="img_info_text_3_1_2">照片必须含有内容：
+①铭牌中所显示的所有信息</string>
+    <string name="img_info_text_4_1_1">注意事项：
+①拍摄请确保图中四个区域在同一照片中
+②请将天窗升起，便于拍摄清晰</string>
+    <string name="img_info_text_4_1_2">照片必须含有内容：
+①车牌  ②天窗（升起） ③车辆左侧腰线  ④车标 </string>
+    <string name="img_info_text_4_2_1">注意事项：
+①拍摄请确保图中三个区域在同一照片中
+②请将天窗升起，便于拍摄清晰</string>
+    <string name="img_info_text_4_2_2">照片必须含有内容：
+①车牌  ②天窗（升起） ③车辆左侧腰线 </string>
+    <string name="img_info_text_4_3_1">注意事项：
+①挡风玻璃的标志一般会在挡风玻璃的左下角或右下角
+②拍摄玻璃标志时在标志背后垫一张白纸减少反光</string>
+    <string name="img_info_text_4_3_2">照片必须含有内容：
+①挡风玻璃标志</string>
+    <string name="img_info_text_4_4_1">注意事项：
+①挡风玻璃的标志一般会在挡风玻璃的左下角或右下角
+②拍摄玻璃标志时在标志背后垫一张白纸减少反光</string>
+    <string name="img_info_text_4_4_2">照片必须含有内容：
+①挡风玻璃标志</string>
+    <string name="img_info_text_5_1_1">注意事项：
+备胎室需掀开挡板拍摄，如有其它遮挡物需拿开拍摄
+后尾板请尽量绕开遮挡物拍摄到尾板底部</string>
+    <string name="img_info_text_5_1_2">照片必须含有内容：
+①备胎室②后尾板</string>
+    <string name="img_info_text_5_2_1">注意事项：
+①拍摄请确保图中三个区域在同一照片中
+②车后尾门要开至最大角度便于拍摄</string>
+    <string name="img_info_text_5_2_2">照片必须含有内容：
+①后尾板结合处  ②后尾灯  ③车后尾门扶手</string>
+    <string name="img_info_text_5_3_1">注意事项：
+①拍摄请确保图中三个区域在同一照片中
+②车后尾门要开至最大角度便于拍摄</string>
+    <string name="img_info_text_5_3_2">照片必须含有内容：
+①后尾板结合处  ②后尾灯  ③车后尾门扶手</string>
+    <string name="img_info_text_5_4_1">照片必须含有内容：
+①右前大梁②右前水箱支架</string>
+    <string name="img_info_text_5_5_1">照片必须含有内容：
+①左前大梁②左前水箱支架</string>
+    <string name="img_info_text_5_6_1">注意事项：
+①红色虚线内的区域必须在同一张照片中
+②确保翼子板结合处为左右边缘
+③雨刮器和车标为上下边缘</string>
+    <string name="img_info_text_5_6_2">照片必须含有内容：
+①引擎室内整体</string>
+    <string name="img_info_text_5_7_1">注意事项：
+①拍摄请确保图中三个区域在同一照片中
+②车门要开至最大角度便于拍摄
+③车厢深处光线不足时进行闪光灯补光或者手电筒补光</string>
+    <string name="img_info_text_5_7_2">照片必须含有内容：
+①右后门扶手控制面板  ②副驾驶位座椅头靠枕  ③后排出风口</string>
+    <string name="img_info_text_5_8_1">注意事项：
+①拍摄请确保图中三个区域在同一照片中
+②车门要开至最大角度便于拍摄
+③车厢深处光线不足时进行闪光灯补光或者手电筒补光</string>
+    <string name="img_info_text_5_8_2">照片必须含有内容：
+①副驾驶位扶手控制面板  ②中控台 ③副驾驶位座椅调节面板</string>
+    <string name="img_info_text_5_9_1">照片必须含有内容：
+①右前翼子板②右减震座</string>
+    <string name="img_info_text_5_10_1">注意事项：
+①拍摄请确保图中三个区域在同一照片中
+②车门要开至最大角度便于拍摄
+③车厢深处光线不足时进行闪光灯补光或者手电筒补光</string>
+    <string name="img_info_text_5_10_2">照片必须含有内容：
+①左后门扶手控制面板  ②驾驶位座椅头靠枕  ③后排出风口</string>
+    <string name="img_info_text_5_11_1">注意事项：
+①拍摄请确保图中六个区域在同一照片中
+②车门要开至最大角度便于拍摄
+③车厢深处光线不足时进行闪光灯补光或者手电筒补光</string>
+    <string name="img_info_text_5_11_2">照片必须含有内容：
+①驾驶位扶手控制面板  ②左出风口下控制面板  ③油门、刹车、离合踏板  ④驾驶位座椅调节面板  ⑤方向盘  ⑥排档及手刹</string>
+    <string name="img_info_text_5_12_1">照片必须含有内容：
+①左前翼子板②左减震座</string>
+    <string name="img_info_text_6_1_1">注意事项：
+①有无天窗均需拍摄
+②如有天窗需开启天窗拍摄</string>
+    <string name="img_info_text_6_1_2">照片必须含有内容：
+①车顶棚</string>
+    <string name="img_info_text_6_2_1">注意事项：
+①拍摄时车辆保持启动状态(即开启后等待车辆自检完毕，自检故障灯熄灭)
+②保证车内光线充足，如光线不足可开启车内照明灯或手机打灯补光
+③仪表公里数需调整为车辆行驶总里程数
+④功能控制杆上标示需拍摄清晰</string>
+    <string name="img_info_text_6_2_2">照片必须含有内容：
+①方向盘整体 ②方向盘上特殊按钮 ③功能控制杆  ④仪表盘整体(里程、故障灯)</string>
+    <string name="img_info_text_6_3_1">注意事项：
+①有无后排出风口均需拍摄
+②如后排出风口有其他功能控制按钮需一并拍摄并清晰显示</string>
+    <string name="img_info_text_6_3_2">照片必须含有内容：
+①后排出风口</string>
+    <string name="img_info_text_6_4_1">注意事项：
+①需清晰拍摄到空调控制系统，车载媒体系统
+②如有车载导航或倒车影像需启动车辆并启动该显示拍摄
+③如有隐藏控制面板，需打开遮盖面板进行拍摄
+④如排挡杆侧边有功能控制按钮需一并拍摄</string>
+    <string name="img_info_text_6_4_2">照片必须含有内容：
+①中控台整体 ②档位杆</string>
+    <string name="img_info_text_6_5_1">注意事项：
+①需特写拍摄，门板控制所有控制按钮均需清晰显示
+②如有隐藏控制按钮需打开覆盖面板进行拍摄</string>
+    <string name="img_info_text_6_5_2">照片必须含有内容：
+①主驾驶门板按钮</string>
+    <string name="img_info_text_7_1_1">注意事项：
+①保险单只需拍摄正本
+②登记证会自然闭合，请用手指按压使其平整（如图）
+③拍摄时应尽量选择光线柔和均匀下进行。如有强烈直射光，可使用遮挡的方法减弱强光
+④证件上的所有信息必须清晰可见，拍摄后请自行预览
+⑤如遇到印刷不清晰时，可局部多拍特写</string>
+    <string name="img_info_text_7_1_2">照片必须含有内容：
+①承保公司名称   ②保单号 ③被保险人  ④号牌号码  ⑤车架号  ⑥发动机号  ⑦保险时间  ⑧保险明细及金额</string>
+
+</resources>

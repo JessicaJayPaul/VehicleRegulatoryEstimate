@@ -1,0 +1,62 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@mipmap/login_bg"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <EditText
+        android:id="@+id/account"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:hint="@string/account"
+        android:maxLength="15"
+        android:singleLine="true"
+        android:textColor="#FEFEFE"
+        android:textColorHint="#7B8082" />
+
+    <EditText
+        android:id="@+id/pwd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/account"
+        android:layout_marginTop="10dp"
+        android:hint="@string/pwd"
+        android:inputType="textPassword"
+        android:maxLength="15"
+        android:singleLine="true"
+        android:textColor="#FEFEFE"
+        android:textColorHint="#7B8082" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/pwd"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/remember"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:button="@drawable/login_check_box"
+            android:text="@string/remember"
+            android:textColor="#009688"
+            android:textSize="17sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/login"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bt_login_selector"
+        android:paddingLeft="50dp"
+        android:paddingRight="50dp"
+        android:text="@string/login"
+        android:textColor="#FEFEFE" />
+
+</RelativeLayout>
