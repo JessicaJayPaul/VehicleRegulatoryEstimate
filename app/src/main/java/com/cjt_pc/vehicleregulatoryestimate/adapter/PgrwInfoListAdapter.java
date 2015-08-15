@@ -1,10 +1,12 @@
 package com.cjt_pc.vehicleregulatoryestimate.adapter;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cjt_pc.vehicleregulatoryestimate.R;
+import com.cjt_pc.vehicleregulatoryestimate.activity.MainActivity;
 import com.cjt_pc.vehicleregulatoryestimate.activity.TaskInfoActivity;
 import com.cjt_pc.vehicleregulatoryestimate.entity.UploadPgrwInfo;
 
@@ -56,17 +59,18 @@ public class PgrwInfoListAdapter extends ArrayAdapter<UploadPgrwInfo> {
             viewHolder = (ViewHolder) view.getTag();
         }
         viewHolder.tv_num.setText("单号：" + info.getPgdh());
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getContext(), TaskInfoActivity.class);
+                intent.putExtra("pgrwInfo", info);
+                ((Activity) getContext()).startActivityForResult(intent, MainActivity.UPDATE_LIST);
+            }
+        });
         if (info.getZt().equals("-1")) {
             viewHolder.tv_finish.setText("未完成");
             viewHolder.tv_status.setText("状态：" + "未上传");
             // 如果是本地数据就加上长按监听事件
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(getContext(), TaskInfoActivity.class);
-                    intent.putExtra("info", info);
-                }
-            });
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
@@ -82,7 +86,6 @@ public class PgrwInfoListAdapter extends ArrayAdapter<UploadPgrwInfo> {
                                             + "/jiuche" + "/imgDir" + info.getId();
                                     TaskInfoActivity.deleteDir(new File(imgListPath));
                                     Toast.makeText(getContext(), "删除本地文件成功！", Toast.LENGTH_SHORT).show();
-
                                     uploadPgrwInfoList.remove(info);
                                     notifyDataSetChanged();
                                 }
@@ -95,6 +98,7 @@ public class PgrwInfoListAdapter extends ArrayAdapter<UploadPgrwInfo> {
         } else {
             viewHolder.tv_finish.setText("已完成");
             viewHolder.tv_status.setText("状态：" + info.getZtsm());
+            view.setOnLongClickListener(null);
         }
 
         return view;

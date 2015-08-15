@@ -1,15 +1,10 @@
 package com.cjt_pc.vehicleregulatoryestimate.my_view;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cjt_pc.vehicleregulatoryestimate.R;
-import com.cjt_pc.vehicleregulatoryestimate.activity.DisImgActivity;
+import com.cjt_pc.vehicleregulatoryestimate.activity.MainActivity;
 import com.cjt_pc.vehicleregulatoryestimate.activity.TaskInfoActivity;
 import com.cjt_pc.vehicleregulatoryestimate.adapter.PgrwInfoListAdapter;
 import com.cjt_pc.vehicleregulatoryestimate.entity.UploadPgrwInfo;
@@ -33,7 +28,6 @@ import com.cjt_pc.vehicleregulatoryestimate.utils.SystemUtil;
 import org.ksoap2.serialization.SoapObject;
 import org.litepal.crud.DataSupport;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +50,9 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
     // 防止出现刷新闪屏情况，设置任务列表缓存
     private List<UploadPgrwInfo> bufferInfoList = new ArrayList<>();
     private List<UploadPgrwInfo> pgrwInfoList = new ArrayList<>();
-    private PgrwInfoListAdapter listAdapter;
+    public PgrwInfoListAdapter listAdapter;
+    // double buffer
+    private List<UploadPgrwInfo> bufferOLList = new ArrayList<>();
 
     private SlidingLayout slidingLayout;
 
@@ -67,13 +63,20 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
         LayoutInflater.from(context).inflate(R.layout.middle_slide_layout, this);
         initTitleView();
         initListView();
-        // 列表的更新放到MainActivity的onResume方法中
+        uploadList();
     }
 
-    public void getPgrwList() {
+    public void getPgrwList(boolean onlyLocal) {
         // 我也不懂为毛在这里clear()就会自动通知适配器更新，只有加一个缓存list了
         bufferInfoList.clear();
         loadLocalTasks();
+        if (onlyLocal) {
+            bufferInfoList.addAll(bufferOLList);
+            pgrwInfoList.clear();
+            pgrwInfoList.addAll(bufferInfoList);
+            listAdapter.notifyDataSetChanged();
+            return;
+        }
         if (SystemUtil.isNetworkConnected(mContext)) {
             loadOnlineTasks();
         } else {
@@ -116,6 +119,9 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
                     SoapObject object = (SoapObject) soapObject.getProperty(i);
                     infos.add(UploadPgrwInfo.getUploadPgrwInfo(object));
                 }
+                bufferOLList.clear();
+                bufferOLList.addAll(infos);
+
                 bufferInfoList.addAll(infos);
                 pgrwInfoList.clear();
                 pgrwInfoList.addAll(bufferInfoList);
@@ -193,12 +199,12 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
         listView.setOnPullToRefreshListener(new MultiListView.PullToRefreshListener() {
             @Override
             public void onRefresh() {
-                getPgrwList();
+                getPgrwList(false);
                 listView.onFinishPullToRefresh();
             }
         });
         listView.setLVBGColor("#37474F");
-        listView.setOnItemClickListener(this);
+//        listView.setOnItemClickListener(this);
     }
 
     @Override
@@ -207,7 +213,7 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
             // popupWidow下面3个子view的点击事件
             case R.id.new_task:
                 Intent intent = new Intent(mContext, TaskInfoActivity.class);
-                mContext.startActivity(intent);
+                ((Activity) getContext()).startActivityForResult(intent, MainActivity.UPDATE_LIST);
                 popupWindow.dismiss();
                 break;
             case R.id.upload_task:
@@ -236,7 +242,7 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                getPgrwList();
+                getPgrwList(false);
                 progressDialog.dismiss();
             }
         }).start();

@@ -4,6 +4,13 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import org.kobjects.base64.Base64;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 /**
  * Created by cjt-pc on 2015/8/8.
  * Email:879309896@qq.com
@@ -32,5 +39,25 @@ public class SystemUtil {
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = connectivity.getActiveNetworkInfo();
         return info.getTypeName().equals("WIFI");
+    }
+
+    //图片转化成base64字符串
+    public static String GetImageStr(String imgName) {//将图片文件转化为字节数组字符串，并对其进行Base64编码处理
+        if (!new File(imgName).exists()) {
+            return null;
+        }
+        InputStream in;
+        byte[] data = null;
+        //读取图片字节数组
+        try {
+            in = new FileInputStream(imgName);
+            data = new byte[in.available()];
+            in.read(data);
+            in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //对字节数组Base64编码
+        return Base64.encode(data);//返回Base64编码过的字节数组字符串
     }
 }

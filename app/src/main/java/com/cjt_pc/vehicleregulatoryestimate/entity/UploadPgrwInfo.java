@@ -16,14 +16,14 @@ import java.util.List;
  */
 public class UploadPgrwInfo extends DataSupport implements KvmSerializable, Serializable {
 
-    private boolean isEdit = false;
+    private boolean edit = false;
 
     public boolean isEdit() {
-        return isEdit;
+        return edit;
     }
 
-    public void setIsEdit(boolean isEdit) {
-        this.isEdit = isEdit;
+    public void setEdit(boolean edit) {
+        this.edit = edit;
     }
 
     private String ppmc;

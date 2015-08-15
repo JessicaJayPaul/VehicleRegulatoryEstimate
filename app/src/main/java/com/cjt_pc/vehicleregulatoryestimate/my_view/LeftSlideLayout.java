@@ -1,5 +1,6 @@
 package com.cjt_pc.vehicleregulatoryestimate.my_view;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -7,6 +8,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 import com.cjt_pc.vehicleregulatoryestimate.R;
+import com.cjt_pc.vehicleregulatoryestimate.activity.MainActivity;
 import com.cjt_pc.vehicleregulatoryestimate.activity.SysSettingsActivity;
 import com.cjt_pc.vehicleregulatoryestimate.activity.TaskInfoActivity;
 
@@ -35,7 +37,7 @@ public class LeftSlideLayout extends LinearLayout implements View.OnClickListene
         switch (v.getId()) {
             case R.id.new_task:
                 intent = new Intent(getContext(), TaskInfoActivity.class);
-                getContext().startActivity(intent);
+                ((Activity) getContext()).startActivityForResult(intent, MainActivity.UPDATE_LIST);
                 break;
             case R.id.system_settings:
                 intent = new Intent(getContext(), SysSettingsActivity.class);

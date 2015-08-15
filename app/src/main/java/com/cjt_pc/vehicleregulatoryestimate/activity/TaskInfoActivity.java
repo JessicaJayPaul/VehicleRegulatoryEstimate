@@ -36,11 +36,7 @@ import com.cjt_pc.vehicleregulatoryestimate.utils.SoapUtil;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SystemUtil;
 
 import org.kobjects.base64.Base64;
-import org.ksoap2.SoapEnvelope;
-import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
-import org.ksoap2.serialization.SoapSerializationEnvelope;
-import org.ksoap2.transport.HttpTransportSE;
 import org.litepal.crud.DataSupport;
 
 import java.io.ByteArrayOutputStream;
@@ -157,6 +153,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 isEditing = false;
                 // 本地直接读取task_id
                 taskId = pgrwInfo.getId();
+                // I don't konw why I have to find it from db again if you don't want taskId add 1.
+                pgrwInfo = DataSupport.find(UploadPgrwInfo.class, taskId);
             } else {
                 // 网络状态先存数据库，获取自增taskId
                 pgrwInfo.save();
@@ -164,7 +162,6 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 getUpLoadListNew();
                 curTaskStatus = ONLINE_TASK;
                 if (pgrwInfo.getZt().equals("")) {
-                    pgrwInfo.setIsEdit(true);
                     isEditable = true;
                 } else {
                     isEditable = false;
@@ -291,6 +288,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void onError(Exception e) {
+                dialog.dismiss();
+                Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
         });
@@ -324,6 +323,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
                 @Override
                 public void onError(Exception e) {
+                    dialog.dismiss();
+                    Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
             });
@@ -362,6 +363,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
                 @Override
                 public void onError(Exception e) {
+                    dialog.dismiss();
+                    Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
             });
@@ -399,6 +402,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
                 @Override
                 public void onError(Exception e) {
+                    dialog.dismiss();
+                    Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
             });
@@ -436,6 +441,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
                 @Override
                 public void onError(Exception e) {
+                    dialog.dismiss();
+                    Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
             });
@@ -710,6 +717,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             case R.id.edit_task:
                 if (!isEditing) {
                     if (curTaskStatus == ONLINE_TASK) {
+                        pgrwInfo.setEdit(true);
                         curTaskStatus = LOCAL_TASK;
                     }
                     ibtEdit.setImageResource(R.mipmap.edit_btn_gray);
@@ -869,12 +877,13 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
     private void savePgrwInfo() {
         setPgrwInfo();
         Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent();
+        setResult(MainActivity.SAVE, intent);
         super.finish();
     }
 
     private void setPgrwInfo() {
         // 我也不知道为毛非要重新冲数据库找一次才不会新增数据，直接覆盖
-        UploadPgrwInfo pgrwInfo = DataSupport.find(UploadPgrwInfo.class, taskId);
         pgrwInfo.setCzmc(et_1.getText().toString());
         pgrwInfo.setCphm(et_2.getText().toString());
         pgrwInfo.setPl(et_3.getText().toString());
@@ -900,6 +909,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         pgrwInfo.setEscysjg(et_20.getText().toString());
         pgrwInfo.setZdrq(tv_9.getText().toString());
         pgrwInfo.setTjrq(tv_10.getText().toString());
+        pgrwInfo.setZdr(User.getUserInstance().getZdr());
         pgrwInfo.setIsCheck("0");
         pgrwInfo.setWjsl("0");
         pgrwInfo.setZt("-1");
@@ -928,7 +938,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 uploadImage();
                 uploadPgrwInfo();
             } catch (Exception e) {
-                Log.e("cjt-pc", "上传异常");
+                dialog.dismiss();
+                Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
             return null;
@@ -946,6 +957,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 deleteDir(new File(imgListPath));
             }
             dialog.dismiss();
+            Intent intent = new Intent();
+            setResult(MainActivity.UPLOAD, intent);
             TaskInfoActivity.this.finish();
         }
     }
@@ -983,6 +996,9 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             UploadImageEntity uploadImageEntity = imgList.get(i);
             uploadImageEntity.setDjh(uploadPgrwInfo.getOlddjh());
             File imgFile = new File(uploadImageEntity.getFilepath());
+            if (!imgFile.exists()) {
+                continue;
+            }
             InputStream in = new FileInputStream(imgFile);
             int blockSize = 1024 * 1024;
             byte[] bytes = readStream(in);
@@ -1054,11 +1070,15 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         }
     }
 
+    private void uploadPgrwImgList(){
+
+    }
+
     private void uploadPgrwInfo() {
         if (isEditing) {
             setPgrwInfo();
-            pgrwInfo.setZt("");
         }
+        pgrwInfo.setZt("");
         LinkedHashMap<String, Object> properties = new LinkedHashMap<>();
         properties.put("pgrwmodel", pgrwInfo);
         List<UploadImageEntity> imgList = DataSupport.where("uploadpgrwinfo_id = ?", taskId + "")
@@ -1068,7 +1088,11 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             uploadImageList.add(entity);
         }
         properties.put("list", uploadImageList);
-        properties.put("czfs", "creat");
+        if (pgrwInfo.isEdit()) {
+            properties.put("czfs", "edit");
+        } else {
+            properties.put("czfs", "creat");
+        }
         SoapUtil.postSoapRequest(properties, "SavePgrw", new SoapCallBackListener() {
             @Override
             public void onFinish(SoapObject soapObject) {
@@ -1080,41 +1104,5 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
             }
         });
-    }
-
-    private void uploadTaskWebService() throws Exception {
-        String nameSpace = "http://tempuri.org/";
-        String methodName = "SavePgrw";
-        String url = "http://61.183.41.211:8883/WCFService/VRESystemService.svc";
-        String soapAction = "http://tempuri.org/IVRESystemService/SavePgrw";
-        if (isEditing) {
-            setPgrwInfo();
-        }
-        pgrwInfo.setZt("");
-
-        HttpTransportSE transportSE = new HttpTransportSE(url);
-        transportSE.debug = true;
-
-        SoapObject soapObject = new SoapObject(nameSpace, methodName);
-        soapObject.addProperty("pgrwmodel", pgrwInfo);
-//        PropertyInfo propertyInfo = new PropertyInfo();
-//        propertyInfo.setName("list");
-//        propertyInfo.setValue(new ArrayList<UploadImageEntity>());
-//        soapObject.addProperty(propertyInfo);
-        soapObject.addProperty("list", new UploadImageList());
-        soapObject.addProperty("czfs", "creat");
-
-        SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER10);
-        envelope.dotNet = true;
-        envelope.bodyOut = transportSE;
-        envelope.setOutputSoapObject(soapObject);
-        try {
-            transportSE.call(soapAction, envelope);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        SoapObject obj = (SoapObject) envelope.bodyIn;
-        SoapObject cObj = (SoapObject) obj.getProperty(0);
     }
 }

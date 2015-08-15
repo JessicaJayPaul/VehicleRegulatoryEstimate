@@ -45,8 +45,13 @@ public class SoapUtil implements SoapConfig {
                 transport.debug = true;
                 try {
                     transport.call(soapAction, envelope);
-                } catch (Exception e) {
-                    listener.onError(e);
+                } catch (final Exception e) {
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onError(e);
+                        }
+                    });
                 }
                 // 接受服务端返回的数据，取其child
                 SoapObject object = (SoapObject) envelope.bodyIn;

@@ -24,6 +24,10 @@
         <activity android:name=".sortlistview.ChooseCarInfo" />
         <activity android:name=".activity.DisImgActivity" />
         <activity android:name=".activity.SysSettingsActivity" />
+
+        <meta-data
+            android:name="PGYER_APPID"
+            android:value="38453d23fec33bcbd173aee62333a850" />
     </application>
 
 </manifest>

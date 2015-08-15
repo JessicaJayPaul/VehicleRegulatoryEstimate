@@ -1,7 +1,9 @@
 package com.cjt_pc.vehicleregulatoryestimate.activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -18,6 +20,9 @@ import com.cjt_pc.vehicleregulatoryestimate.entity.User;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SoapCallBackListener;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SoapUtil;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SystemUtil;
+import com.pgyersdk.javabean.AppBean;
+import com.pgyersdk.update.PgyUpdateManager;
+import com.pgyersdk.update.UpdateManagerListener;
 
 import org.ksoap2.serialization.SoapObject;
 
@@ -42,6 +47,32 @@ public class LoginInActivity extends Activity implements View.OnClickListener {
         setContentView(R.layout.login_activity_layout);
         preferences = getSharedPreferences("data", MODE_PRIVATE);
         initWidget();
+        checkUpdate();
+    }
+
+    private void checkUpdate() {
+        PgyUpdateManager.register(LoginInActivity.this, new UpdateManagerListener() {
+            @Override
+            public void onUpdateAvailable(final String result) {
+                // 将新版本信息封装到AppBean中
+                final AppBean appBean = getAppBeanFromString(result);
+                new AlertDialog.Builder(LoginInActivity.this)
+                        .setTitle("提示")
+                        .setMessage("检测到有新的版本，是否立即更新？")
+                        .setPositiveButton("好的", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                startDownloadTask(LoginInActivity.this, appBean.getDownloadURL());
+                            }
+                        })
+                        .setNegativeButton("不了", null)
+                        .show();
+            }
+
+            @Override
+            public void onNoUpdateAvailable() {
+            }
+        });
     }
 
 

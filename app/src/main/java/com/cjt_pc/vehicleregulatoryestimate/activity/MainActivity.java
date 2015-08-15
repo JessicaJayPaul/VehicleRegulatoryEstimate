@@ -2,6 +2,7 @@ package com.cjt_pc.vehicleregulatoryestimate.activity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.PersistableBundle;
@@ -22,6 +23,10 @@ import org.litepal.tablemanager.Connector;
  */
 public class MainActivity extends Activity {
 
+    public final static int UPDATE_LIST = 0;
+    public final static int SAVE = 1;
+    public final static int UPLOAD = 2;
+
     private MiddleSlideLayout middleSlideLayout;
 
     @Override
@@ -36,9 +41,19 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onResume() {
-        middleSlideLayout.uploadList();
-        super.onResume();
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == UPDATE_LIST) {
+            switch (resultCode) {
+                case SAVE:
+                    middleSlideLayout.getPgrwList(true);
+                    break;
+                case UPLOAD:
+                    middleSlideLayout.uploadList();
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     // 再按一次退出应用
