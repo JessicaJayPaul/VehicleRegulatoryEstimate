@@ -3,6 +3,7 @@ package com.cjt_pc.vehicleregulatoryestimate.utils;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Environment;
 
 import org.kobjects.base64.Base64;
 
@@ -59,5 +60,11 @@ public class SystemUtil {
         }
         //对字节数组Base64编码
         return Base64.encode(data);//返回Base64编码过的字节数组字符串
+    }
+
+    // 检查是否有内存卡
+    public static boolean isHasSdCard() {
+        return Environment.getExternalStorageState().
+                equals(android.os.Environment.MEDIA_MOUNTED);
     }
 }

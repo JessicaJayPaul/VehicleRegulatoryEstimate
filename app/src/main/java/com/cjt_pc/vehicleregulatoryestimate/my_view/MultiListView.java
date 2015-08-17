@@ -8,14 +8,12 @@ import android.graphics.Point;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.RotateAnimation;
 import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -25,6 +23,11 @@ import android.widget.RelativeLayout;
 import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.Toast;
+
+/**
+ * Created by cjt-pc on 2015/8/16.
+ * Email:879309896@qq.com
+ */
 
 
 public class MultiListView extends LinearLayout implements View.OnTouchListener {
@@ -69,8 +72,6 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
     private ArrayAdapter adapter;
     // 是否没有更多数据（上拉加载）
     private boolean isNoMoreData;
-    // 刷新、加载布局的背景色，默认是灰色
-    private int refreshColor = Color.GRAY;
     // 刷新箭头的id，默认采用系统的
     private int refreshArrowId = android.R.drawable.arrow_down_float;
     // 刷新完成图片的id，默认也是采用系统的
@@ -80,7 +81,7 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
 
     private void initBasicValue(Context context) {
         setOrientation(VERTICAL);
-        setBackgroundColor(refreshColor);
+        setBackgroundColor(Color.GRAY);
         // 初始化所需各个变量
         mContext = context;
         util = new DensityUtil(context);
@@ -113,14 +114,12 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
         header.setLayoutParams(params);
         header.arrow.setImageResource(refreshArrowId);
         header.progressBar.setVisibility(GONE);
-        listView.setOnTouchListener(this);
-        this.addView(header, 0);
+        this.addView(header);
     }
 
     // 设置上拉加载布局
     private void setFooter() {
         footer = new BaseRefreshLayout(mContext, footerHeight);
-        footer.setBackgroundColor(refreshColor);
         footer.txtLlLayout.setVisibility(GONE);
         footer.progressBar.setVisibility(GONE);
         footer.txtRlLayout.setVisibility(VISIBLE);
@@ -171,29 +170,48 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
     }
 
     private void setListView() {
+        setHeader();
         listView = new ListView(mContext);
         // 自定义视图一定要注意设置宽高参数，除非onMeasure
-        this.addView(listView, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        listView.setLayoutParams(params);
+        listView.setBackgroundColor(Color.WHITE);
+        this.addView(listView);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int measureWidth = MeasureSpec.getSize(widthMeasureSpec);
-        int measureHeigth = MeasureSpec.getSize(heightMeasureSpec);
+        int sizeWidth = MeasureSpec.getSize(widthMeasureSpec);
+        int sizeHeight = MeasureSpec.getSize(heightMeasureSpec);
         measureChildren(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(measureWidth, measureHeigth);
+        setMeasuredDimension(sizeWidth, sizeHeight);
     }
 
     // 重点关注changed
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-        if (changed) {
-            if (header != null) {
-                MarginLayoutParams params = (MarginLayoutParams) header.getLayoutParams();
-                params.topMargin = -header.getMeasuredHeight();
-                header.setLayoutParams(params);
+        int cCount = getChildCount();
+        int cWidth;
+        int cHeight;
+        for (int i = 0; i < cCount; i++) {
+            View childView = getChildAt(i);
+            cWidth = childView.getMeasuredWidth();
+            cHeight = childView.getMeasuredHeight();
+            int cl = 0, ct = 0, cr, cb;
+            switch (i) {
+                case 0:
+                    cl = 0;
+                    ct = -cHeight;
+                    break;
+                case 1:
+                    cl = 0;
+                    ct = 0;
+                    break;
             }
+            cr = cWidth + cl;
+            cb = cHeight + ct;
+            childView.layout(cl, ct, cr, cb);
         }
     }
 
@@ -221,6 +239,7 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
                     // 上滑过程中越界处理
                     dY = tempY < 0 ? -getScrollY() : -dY / 2;
                     scrollBy(0, dY);
+                    break;
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -276,21 +295,24 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
         }
     }
 
+    @Override
+    public void setBackgroundColor(int color) {
+        super.setBackgroundColor(color);
+        if (footer != null) {
+            footer.setBackgroundColor(color);
+        }
+    }
+
     private boolean isOnTop() {
         View firstChild = listView.getChildAt(0);
         // 注意listView.getCount()和listView.getChildCount()的区别
         return (firstChild == null || firstChild.getTop() == 0) && listView.getFirstVisiblePosition() == 0;
     }
 
-    public void setListViewAdapter(ArrayAdapter adapter) {
-        listView.setAdapter(adapter);
-        this.adapter = adapter;
-    }
-
     public void setOnPullToRefreshListener(PullToRefreshListener listener) {
         this.refreshListener = listener;
         // 尤其注意添加子view的顺序
-        setHeader();
+        listView.setOnTouchListener(this);
     }
 
     public void setAutoRefreshListener(AutoRefreshListener listener) {
@@ -432,44 +454,15 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
         }
     }
 
-    // 设置Item点击监听
-    public void setOnItemClickListener(AdapterView.OnItemClickListener listener) {
-        listView.setOnItemClickListener(listener);
+    // 设置listView的适配器
+    public void setAdapter(ArrayAdapter adapter) {
+        listView.setAdapter(adapter);
+        this.adapter = adapter;
     }
 
-    public void setOnItemLongClickListener(AdapterView.OnItemLongClickListener listener) {
-        listView.setOnItemLongClickListener(listener);
-    }
-
-    // 设置刷新背景色，形参为int类型
-    public void setRefreshBGColor(int intColor) {
-        if (header != null) {
-            // 注意下拉刷新布局的背景是父布局的背景
-            this.setBackgroundColor(intColor);
-        }
-        if (footer != null) {
-            footer.setBackgroundColor(intColor);
-        }
-    }
-
-    // 重载上个方法，形参为String类型
-    public void setRefreshBGColor(String strColor) {
-        int intColor = Color.parseColor(strColor);
-        if (header != null) {
-            this.setBackgroundColor(intColor);
-        }
-        if (footer != null) {
-            footer.setBackgroundColor(intColor);
-        }
-    }
-
-    public void setLVBGColor(String strColor) {
-        int intColor = Color.parseColor(strColor);
+    // 设置listView的背景色
+    public void setListViewBgColor(int intColor) {
         listView.setBackgroundColor(intColor);
-    }
-
-    public void setRefreshArrowId(int id) {
-        refreshArrowId = id;
     }
 
     // 设置刷新完成图片
@@ -504,6 +497,7 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
             setLayout();
         }
 
+        // 重载的构造方法，用于设置高度
         public BaseRefreshLayout(Context context, int height) {
             super(context);
             dpHeight = height;
@@ -561,7 +555,6 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
             updateAt.setLayoutParams(bottomTxtParams);
             updateAt.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
             txtLlLayout.addView(updateAt);
-
             // 设置提示文字布局
             txtRlLayout = new RelativeLayout(mContext);
             LinearLayout.LayoutParams txtRlParams = new LinearLayout.LayoutParams(0, height);
@@ -576,10 +569,6 @@ public class MultiListView extends LinearLayout implements View.OnTouchListener 
             infoParams.addRule(CENTER_IN_PARENT);
             info.setLayoutParams(infoParams);
             txtRlLayout.addView(info);
-        }
-
-        public BaseRefreshLayout(Context context, AttributeSet attrs) {
-            super(context, attrs);
         }
     }
 

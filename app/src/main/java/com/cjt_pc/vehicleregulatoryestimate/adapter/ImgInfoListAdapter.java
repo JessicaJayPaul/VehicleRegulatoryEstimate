@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import com.cjt_pc.vehicleregulatoryestimate.R;
 import com.cjt_pc.vehicleregulatoryestimate.entity.DisImgItem;
+import com.cjt_pc.vehicleregulatoryestimate.my_view.MultiListView;
+import com.cjt_pc.vehicleregulatoryestimate.utils.DensityUtil;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.RequestCreator;
 
@@ -45,25 +47,28 @@ public class ImgInfoListAdapter extends ArrayAdapter<DisImgItem> {
             view = convertView;
             viewHolder = (ViewHolder) view.getTag();
         }
+
         // 如果是图片地址是空的话，默认读取mipmap下的
         if (TextUtils.isEmpty(item.getImgPath())) {
             viewHolder.ivImg.setImageResource(item.getImgId());
         } else {
             File tempFile = new File(item.getImgPath());
-            RequestCreator creator;
             if (tempFile.exists()) {
                 // 本地图片读取
-                creator = Picasso.with(getContext()).load(tempFile);
+                int proWidth = DensityUtil.dpTopx(getContext(), 130f);
+                int proHeight = DensityUtil.dpTopx(getContext(), 100f);
+                Picasso.with(getContext()).load(tempFile)
+                        .resize(proWidth, proHeight).centerInside().into(viewHolder.ivImg);
             } else {
                 // 网络图片读取
-                creator = Picasso.with(getContext()).load(item.getImgPath());
+                Picasso.with(getContext()).load(item.getImgPath()).into(viewHolder.ivImg);
             }
+
 //            viewHolder.ivImg.measure(
 //                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
 //                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
 //            int reWidth = viewHolder.ivImg.getMeasuredWidth();
 //            int reHeight = viewHolder.ivImg.getMeasuredHeight();
-            creator.into(viewHolder.ivImg);
         }
         viewHolder.tvTips.setText(item.getImgTips());
         return view;

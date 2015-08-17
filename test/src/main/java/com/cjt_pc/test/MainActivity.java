@@ -1,9 +1,10 @@
 package com.cjt_pc.test;
 
+import android.graphics.Bitmap;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.ImageView;
 
-import org.litepal.crud.DataSupport;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -11,6 +12,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        User user = DataSupport.find(User.class, 1);
+
     }
 }

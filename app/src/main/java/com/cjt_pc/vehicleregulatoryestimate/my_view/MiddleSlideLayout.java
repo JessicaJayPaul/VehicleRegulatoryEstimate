@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -195,7 +196,7 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
     private void initListView() {
         listAdapter = new PgrwInfoListAdapter(mContext, R.layout.pgrw_list_item, pgrwInfoList);
         listView = (MultiListView) findViewById(R.id.list_view);
-        listView.setListViewAdapter(listAdapter);
+        listView.setAdapter(listAdapter);
         listView.setOnPullToRefreshListener(new MultiListView.PullToRefreshListener() {
             @Override
             public void onRefresh() {
@@ -203,7 +204,8 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
                 listView.onFinishPullToRefresh();
             }
         });
-        listView.setLVBGColor("#37474F");
+        listView.setListViewBgColor(Color.parseColor("#37474F"));
+        // 之所以不直接添加个onItemClickListener是因为本地任务长按有监听，为了用户体验，放在adapter中
 //        listView.setOnItemClickListener(this);
     }
 

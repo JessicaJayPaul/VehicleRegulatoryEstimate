@@ -11,7 +11,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -428,10 +427,13 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                         SoapObject object = (SoapObject) soapObject.getProperty(i);
                         String filefl = object.getPrimitivePropertyAsString("filefl").trim();
                         uploadImageEntity.setFilefl(filefl);
+                        uploadImageEntity.setScr(object.getPrimitivePropertyAsString("scr"));
+                        uploadImageEntity.setFilesize(object.getPrimitivePropertyAsString("filesize"));
                         String filepath = "http://61.183.41.211:8883/" + returnPath(object.getPrimitivePropertyAsString("filepath"));
                         uploadImageEntity.setFilepath(filepath);
                         String filewz = object.getPrimitivePropertyAsString("filewz");
                         uploadImageEntity.setFilewz(filewz);
+                        uploadImageEntity.setScrq("2015-07-14");
                         uploadImageEntity.save();
                         pgrwInfo.getImageEntityList().add(uploadImageEntity);
                     }
@@ -592,8 +594,12 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         }
         initTime();
         initSp();
-        // 牵一发而动全身
-        getCppList();
+        if (!pgrwInfo.getPpmc().equals("请选择品牌")) {
+            // 牵一发而动全身
+            getCppList();
+        } else {
+            isEditing = true;
+        }
     }
 
     // 点击编辑按钮后初始化出厂日期和登记日期
@@ -641,9 +647,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    if (checkTask()) {
-                        savePgrwInfo();
-                    }
+                    savePgrwInfo();
                 }
             });
             builder.setNegativeButton("否", new DialogInterface.OnClickListener() {
@@ -728,9 +732,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             case R.id.save_task:
                 popupWindow.dismiss();
                 if (isEditing) {
-                    if (checkTask()) {
-                        savePgrwInfo();
-                    }
+                    savePgrwInfo();
                 } else {
                     Toast.makeText(this, "当前状态不可保存", Toast.LENGTH_SHORT).show();
                 }
@@ -738,12 +740,15 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             case R.id.upload_task:
                 popupWindow.dismiss();
                 if (isEditing) {
-                    if (checkTask()) {
+                    setPgrwInfo();
+                    if (checkTaskBeforeUpload()) {
                         checkUploadNet();
                     }
                 } else {
                     if (curTaskStatus == LOCAL_TASK) {
-                        checkUploadNet();
+                        if (checkTaskBeforeUpload()) {
+                            checkUploadNet();
+                        }
                     } else {
                         Toast.makeText(this, "当前状态不可上传", Toast.LENGTH_SHORT).show();
                     }
@@ -850,26 +855,81 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         startActivityForResult(intent, requestCode);
     }
 
-    private boolean checkTask() {
-        if (TextUtils.isEmpty(et_1.getText().toString())) {
-            Toast.makeText(this, "车主名称不能为空！", Toast.LENGTH_SHORT).show();
+    // 上传之前，若没有编辑检查各约束
+    private boolean checkTaskBeforeUpload() {
+        String[] strTemp = {pgrwInfo.getCzmc(), pgrwInfo.getCphm(), pgrwInfo.getPl(), pgrwInfo.getGl(), pgrwInfo.getFdjh(),
+                pgrwInfo.getCjhm(), pgrwInfo.getXslc(), pgrwInfo.getCpxh(), pgrwInfo.getCllx(),
+                pgrwInfo.getDkcs(), pgrwInfo.getZw(), pgrwInfo.getTbrsj(), pgrwInfo.getEscysjg()};
+        for (String temp : strTemp) {
+            if (TextUtils.isEmpty(temp)) {
+                Toast.makeText(this, "相关信息不能为空！", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+        // 车排量限制
+        try {
+            Double pl = Double.parseDouble(pgrwInfo.getPl());
+            if (pl > 10) {
+                Toast.makeText(this, "排量必须小于10！", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "排量必须为数字！", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        // 功率限制
+        try {
+            int temp = Integer.parseInt(pgrwInfo.getGl());
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "功率必须为数字！", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        // 车架号限制
+        if (pgrwInfo.getCjhm().length() > 17) {
+            Toast.makeText(this, "车架号码必须不大于17位！", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        // 公里数限制
+        try {
+            int temp = Integer.parseInt(pgrwInfo.getXslc());
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "公里数必须为数字！", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        // 日期限制
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
+            Date ccrq = sdf.parse(pgrwInfo.getCcrq());
+            Date djrq = sdf.parse(pgrwInfo.getDjrq());
+            if (ccrq.after(djrq)) {
+                Toast.makeText(this, "出厂日期一定不在登记日期之后！", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "日期转换出了问题！", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        // 座位限制
+        try {
+            int temp = Integer.parseInt(pgrwInfo.getZw());
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "座位必须为数字！", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        // 预售价格限制
+        try {
+            double pl = Double.parseDouble(pgrwInfo.getEscysjg());
+            if (pl < 1000d) {
+                Toast.makeText(this, "预售价格不能低于1000！", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "预售价格必须为数字！", Toast.LENGTH_SHORT).show();
             return false;
         }
         if (cppList.isEmpty()) {
             Toast.makeText(this, "没有选择车辆相关信息！", Toast.LENGTH_SHORT).show();
             return false;
-        }
-        if (TextUtils.isEmpty(et_20.getText().toString())) {
-            Toast.makeText(this, "必须填写预售价格！", Toast.LENGTH_SHORT).show();
-            return false;
-        } else {
-            String strPrice = et_20.getText().toString();
-            try {
-                int tempPrice = Integer.parseInt(strPrice);
-            } catch (NumberFormatException e) {
-                Toast.makeText(this, "请填写合法的价格数目！", Toast.LENGTH_SHORT).show();
-                return false;
-            }
         }
         return true;
     }
@@ -897,18 +957,18 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         pgrwInfo.setCpxh(et_11.getText().toString());
         pgrwInfo.setCllx(et_12.getText().toString());
         pgrwInfo.setPpmc(tv_13.getText().toString());
-        pgrwInfo.setPp(cppIdList.get(cppList.indexOf(tv_13.getText().toString())));
         pgrwInfo.setPxmc(tv_14.getText().toString());
-        pgrwInfo.setPx(cxIdList.get(cxList.indexOf(tv_14.getText().toString())));
         pgrwInfo.setCx(tv_15.getText().toString());
-        pgrwInfo.setCxdm(cxingIdList.get(cxingList.indexOf(tv_15.getText().toString())));
+        if (!cppList.isEmpty()) {
+            pgrwInfo.setPp(cppIdList.get(cppList.indexOf(tv_13.getText().toString())));
+            pgrwInfo.setPx(cxIdList.get(cxList.indexOf(tv_14.getText().toString())));
+            pgrwInfo.setCxdm(cxingIdList.get(cxingList.indexOf(tv_15.getText().toString())));
+        }
         pgrwInfo.setSyxz(sp_16.getSelectedItem().toString());
         pgrwInfo.setDkcs(et_17.getText().toString());
         pgrwInfo.setZw(et_18.getText().toString());
         pgrwInfo.setTbrsj(et_19.getText().toString());
         pgrwInfo.setEscysjg(et_20.getText().toString());
-        pgrwInfo.setZdrq(tv_9.getText().toString());
-        pgrwInfo.setTjrq(tv_10.getText().toString());
         pgrwInfo.setZdr(User.getUserInstance().getZdr());
         pgrwInfo.setIsCheck("0");
         pgrwInfo.setWjsl("0");
@@ -1070,13 +1130,18 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void uploadPgrwImgList(){
+    private void uploadPgrwImgList() {
 
     }
 
     private void uploadPgrwInfo() {
         if (isEditing) {
             setPgrwInfo();
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
+        pgrwInfo.setTjrq(sdf.format(new Date()));
+        if (TextUtils.isEmpty(pgrwInfo.getZdrq())) {
+            pgrwInfo.setZdrq(sdf.format(new Date()));
         }
         pgrwInfo.setZt("");
         LinkedHashMap<String, Object> properties = new LinkedHashMap<>();

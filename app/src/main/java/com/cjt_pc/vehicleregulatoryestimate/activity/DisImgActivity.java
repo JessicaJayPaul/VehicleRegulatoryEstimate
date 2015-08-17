@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -17,6 +16,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.cjt_pc.vehicleregulatoryestimate.R;
 import com.cjt_pc.vehicleregulatoryestimate.adapter.ImgInfoListAdapter;
@@ -24,6 +24,7 @@ import com.cjt_pc.vehicleregulatoryestimate.entity.DisImgItem;
 import com.cjt_pc.vehicleregulatoryestimate.entity.UploadImageEntity;
 import com.cjt_pc.vehicleregulatoryestimate.entity.UploadPgrwInfo;
 import com.cjt_pc.vehicleregulatoryestimate.my_view.MyTitleView;
+import com.cjt_pc.vehicleregulatoryestimate.utils.SystemUtil;
 
 import org.litepal.crud.DataSupport;
 
@@ -270,8 +271,15 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
         builder.setPositiveButton("拍照", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(intent, START_SYSTEM_CAMERA);
+                if (SystemUtil.isHasSdCard()) {
+                    //指定照片保存路径（SD卡），image.jpg为一个临时文件，每次拍照后这个图片都会被替换
+                    Uri imageUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), "image.jpg"));
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                    startActivityForResult(intent, START_SYSTEM_CAMERA);
+                } else {
+                    Toast.makeText(DisImgActivity.this, "未检查到sd卡！", Toast.LENGTH_SHORT).show();
+                }
             }
         });
         builder.setNegativeButton("相册", new DialogInterface.OnClickListener() {
@@ -291,12 +299,12 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
         if (resultCode == RESULT_OK) {
             File pic = getPicFile();
             if (pic == null) {
-                Log.d("cjt-pc", "创建图片文件失败");
+                Toast.makeText(this, "创建图片文件时出现错误！", Toast.LENGTH_SHORT).show();
                 return;
             }
             switch (requestCode) {
                 case START_SYSTEM_CAMERA:
-                    savePicWithSysCamera(pic, data);
+                    savePicWithSysCamera(pic);
                     savePicToDB(pic);
                     updateItemList();
                     break;
@@ -322,11 +330,13 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
         Uri uri = data.getData();
         Cursor cursor = getContentResolver().query(uri, null,
                 null, null, null);
-        cursor.moveToFirst();
-        String imgPath = cursor.getString(1); // 图片文件路径
-        cursor.close();
-        // 在获取到所选相册图片路径后复制图片到指定路径
-        fileChannelCopy(new File(imgPath), pic);
+        if (cursor != null) {
+            cursor.moveToFirst();
+            String imgPath = cursor.getString(1); // 图片文件路径
+            cursor.close();
+            // 在获取到所选相册图片路径后复制图片到指定路径
+            fileChannelCopy(new File(imgPath), pic);
+        }
     }
 
     // 采用比缓冲更加高效的文件复制方式
@@ -361,27 +371,12 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
     }
 
     private void
-    savePicWithSysCamera(File pic, Intent data) {
-        // 保存至本地
-        Bundle bundle = data.getExtras();
-        Bitmap bitmap = (Bitmap) bundle.get("data");// 获取相机返回的数据，并转换为Bitmap图片格式
-        FileOutputStream fos = null;
-        if (bitmap != null) {
-            try {
-                fos = new FileOutputStream(pic);
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);// 把数据写入文件
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (fos != null) {
-                    try {
-                        fos.flush();
-                        fos.close();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+    savePicWithSysCamera(File pic) {
+        File imgCache = new File(Environment.getExternalStorageDirectory() + "/image.jpg");
+        if (imgCache.exists()) {
+            fileChannelCopy(imgCache, pic);
+        } else {
+            Toast.makeText(this, "保存图片出现未知错误！", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -418,6 +413,10 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
         File pic = new File(imgListDir, picName);
         // 倘若文件存在createNewFile会自动覆盖
         try {
+            if (pic.exists()) {
+                if (!pic.delete())
+                    return null;
+            }
             if (!pic.createNewFile()) {
                 Log.d("cjt-pc", "创建新图片失败！");
                 return null;
