@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +29,9 @@ import com.cjt_pc.vehicleregulatoryestimate.utils.SystemUtil;
 
 import org.ksoap2.serialization.SoapObject;
 import org.litepal.crud.DataSupport;
+import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,6 +99,17 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
 
     private void loadLocalTasks() {
         List<UploadPgrwInfo> localTasks = DataSupport.findAll(UploadPgrwInfo.class);
+        // 如果出现闪退zt是为空，刷新列表时就删掉
+        for (int i = 0; i < localTasks.size(); ) {
+            UploadPgrwInfo info = localTasks.get(i);
+            if (TextUtils.isEmpty(info.getZt())) {
+                DataSupport.delete(UploadPgrwInfo.class, info.getId());
+                localTasks.remove(i);
+                continue;
+            }
+            i++;
+        }
+
         // 按照taskId排序的话应该倒过来去
         Collections.reverse(localTasks);
         bufferInfoList.addAll(localTasks);
@@ -111,34 +125,46 @@ public class MiddleSlideLayout extends LinearLayout implements OnClickListener, 
         strWhere = "zdrq<='" + currentStr + "' and zdr='" + User.getUserInstance().getZdr() + "'";
         final LinkedHashMap<String, Object> properties = new LinkedHashMap<>();
         properties.put("where", strWhere);
-        SoapUtil.postSoapRequest(properties, "getpgrwList", new SoapCallBackListener() {
-            @Override
-            public void onFinish(SoapObject soapObject) {
-                List<UploadPgrwInfo> infos = new ArrayList<>();
-                int count = soapObject.getPropertyCount();
-                for (int i = count - 1; i >= 0; i--) {
-                    SoapObject object = (SoapObject) soapObject.getProperty(i);
-                    infos.add(UploadPgrwInfo.getUploadPgrwInfo(object));
-                }
-                bufferOLList.clear();
-                bufferOLList.addAll(infos);
-
-                bufferInfoList.addAll(infos);
-                pgrwInfoList.clear();
-                pgrwInfoList.addAll(bufferInfoList);
-                ((Activity) mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        listAdapter.notifyDataSetChanged();
+        try {
+            SoapUtil.postSoapRequest(properties, "getpgrwList", new SoapCallBackListener() {
+                @Override
+                public void onFinish(SoapObject soapObject) {
+                    List<UploadPgrwInfo> infos = new ArrayList<>();
+                    int count = soapObject.getPropertyCount();
+                    for (int i = count - 1; i >= 0; i--) {
+                        SoapObject object = (SoapObject) soapObject.getProperty(i);
+                        infos.add(UploadPgrwInfo.getUploadPgrwInfo(object));
                     }
-                });
-            }
+                    bufferOLList.clear();
+                    bufferOLList.addAll(infos);
 
-            @Override
-            public void onError(Exception e) {
-                e.printStackTrace();
-            }
-        });
+                    bufferInfoList.addAll(infos);
+                    pgrwInfoList.clear();
+                    pgrwInfoList.addAll(bufferInfoList);
+                    ((Activity) mContext).runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            listAdapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+
+                }
+            });
+        } catch (Exception e) {
+            ((Activity) mContext).runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(mContext, "请检查网络连接...", Toast.LENGTH_SHORT).show();
+                    pgrwInfoList.clear();
+                    pgrwInfoList.addAll(bufferInfoList);
+                    listAdapter.notifyDataSetChanged();
+                }
+            });
+        }
     }
 
 

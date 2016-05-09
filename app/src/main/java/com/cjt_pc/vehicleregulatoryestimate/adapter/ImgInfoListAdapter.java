@@ -1,7 +1,9 @@
 package com.cjt_pc.vehicleregulatoryestimate.adapter;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,16 +54,23 @@ public class ImgInfoListAdapter extends ArrayAdapter<DisImgItem> {
         if (TextUtils.isEmpty(item.getImgPath())) {
             viewHolder.ivImg.setImageResource(item.getImgId());
         } else {
+            int proWidth = DensityUtil.dpTopx(getContext(), 130f);
+            int proHeight = DensityUtil.dpTopx(getContext(), 100f);
             File tempFile = new File(item.getImgPath());
             if (tempFile.exists()) {
+//                BitmapFactory.Options options = new BitmapFactory.Options();
+//                options.inJustDecodeBounds = true;
+//                BitmapFactory.decodeFile(item.getImgPath(), options);
+//                if (options.outWidth <= proWidth && options.outHeight <= proHeight) {
+//                    Picasso.with(getContext()).load(tempFile).centerInside().into(viewHolder.ivImg);
+//                }
                 // 本地图片读取
-                int proWidth = DensityUtil.dpTopx(getContext(), 130f);
-                int proHeight = DensityUtil.dpTopx(getContext(), 100f);
                 Picasso.with(getContext()).load(tempFile)
                         .resize(proWidth, proHeight).centerInside().into(viewHolder.ivImg);
             } else {
                 // 网络图片读取
-                Picasso.with(getContext()).load(item.getImgPath()).into(viewHolder.ivImg);
+                Picasso.with(getContext()).load(item.getImgPath())
+                        .resize(proWidth, proHeight).centerInside().into(viewHolder.ivImg);
             }
 
 //            viewHolder.ivImg.measure(

@@ -17,12 +17,11 @@ public class UploadImageEntity extends DataSupport implements KvmSerializable {
     // 自增id
     private int id;
 
-    private String localPath;
-
     private String djh;
     private String exfile;
     private String filefl;
     private String filenames;
+    private String filerealpath;
     private String filepath;
     private String filesize;
     private String filewz;
@@ -38,14 +37,6 @@ public class UploadImageEntity extends DataSupport implements KvmSerializable {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public String getLocalPath() {
-        return localPath;
-    }
-
-    public void setLocalPath(String localPath) {
-        this.localPath = localPath;
     }
 
     public String getDjh() {
@@ -86,6 +77,14 @@ public class UploadImageEntity extends DataSupport implements KvmSerializable {
 
     public void setFilepath(String filepath) {
         this.filepath = filepath;
+    }
+
+    public String getFilerealpath() {
+        return filerealpath;
+    }
+
+    public void setFilerealpath(String filerealpath) {
+        this.filerealpath = filerealpath;
     }
 
     public String getFilesize() {

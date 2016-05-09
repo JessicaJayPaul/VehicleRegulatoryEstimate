@@ -59,7 +59,7 @@ public class SystemUtil {
             e.printStackTrace();
         }
         //对字节数组Base64编码
-        return Base64.encode(data);//返回Base64编码过的字节数组字符串
+        return data == null ? null : Base64.encode(data);//返回Base64编码过的字节数组字符串
     }
 
     // 检查是否有内存卡

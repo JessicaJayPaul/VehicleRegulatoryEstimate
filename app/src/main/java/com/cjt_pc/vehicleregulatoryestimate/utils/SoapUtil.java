@@ -6,7 +6,9 @@ import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
+import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 
 /**
@@ -14,6 +16,36 @@ import java.util.LinkedHashMap;
  * Email:879309896@qq.com
  */
 public class SoapUtil implements SoapConfig {
+
+    public static SoapObject postSoapRequest(String method) {
+        return postSoapRequest(method, null);
+    }
+
+    public static SoapObject postSoapRequest(String method, LinkedHashMap<String, Object> properties) {
+        String nameSpace = NAMESPACE;
+        String url = getUrl(method);
+        String soapAction = getAction(method);
+        // 初始化传入参数soapObject
+        SoapObject soapObject = new SoapObject(nameSpace, method);
+        for (LinkedHashMap.Entry<String, Object> entry : properties.entrySet()) {
+            soapObject.addProperty(entry.getKey(), entry.getValue());
+        }
+        // 设置版本和指定信封envelope的数据soapObject
+        SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER10);
+        envelope.bodyOut = soapObject;
+        envelope.dotNet = true;
+        // 采用webservice协议发送请求
+        HttpTransportSE transport = new HttpTransportSE(url);
+        transport.debug = true;
+        try {
+            transport.call(soapAction, envelope);
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        // 接受服务端返回的数据，取其child
+        SoapObject object = (SoapObject) ((SoapObject) envelope.bodyIn).getProperty(0);
+        return object == null ? null : object;
+    }
 
     /**
      * 根据传入的参数和访问方法名访问服务器，同时实现一个网络回调接口
@@ -52,9 +84,19 @@ public class SoapUtil implements SoapConfig {
                             listener.onError(e);
                         }
                     });
+                    return;
                 }
                 // 接受服务端返回的数据，取其child
                 SoapObject object = (SoapObject) envelope.bodyIn;
+                if (object == null) {
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onError(null);
+                        }
+                    });
+                    return;
+                }
                 final SoapObject child = (SoapObject) object.getProperty(0);
                 // 完成回调函数置于当前Activity的主线程中
                 activity.runOnUiThread(new Runnable() {
@@ -69,7 +111,7 @@ public class SoapUtil implements SoapConfig {
 
     // 重载上面方法，不需要传activity参数
     public static void postSoapRequest(final LinkedHashMap<String, Object> properties,
-                                       final String method, final SoapCallBackListener listener) {
+                                       final String method, final SoapCallBackListener listener) throws XmlPullParserException, IOException {
         // 设置命名空间namespace访问地址url和访问方法action
         String nameSpace = NAMESPACE;
         String url = getUrl(method);
@@ -86,15 +128,13 @@ public class SoapUtil implements SoapConfig {
         // 采用webservice协议发送请求
         HttpTransportSE transport = new HttpTransportSE(url);
         transport.debug = true;
-        try {
-            transport.call(soapAction, envelope);
-        } catch (Exception e) {
-            listener.onError(e);
+        transport.call(soapAction, envelope);
+        if (listener != null) {
+            // 接受服务端返回的数据，取其child
+            SoapObject object = (SoapObject) envelope.bodyIn;
+            SoapObject child = (SoapObject) object.getProperty(0);
+            listener.onFinish(child);
         }
-        // 接受服务端返回的数据，取其child
-        SoapObject object = (SoapObject) envelope.bodyIn;
-        SoapObject child = (SoapObject) object.getProperty(0);
-        listener.onFinish(child);
     }
 
     /**

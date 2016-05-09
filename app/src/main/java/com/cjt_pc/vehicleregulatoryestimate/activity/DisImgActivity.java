@@ -5,10 +5,13 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.graphics.BitmapCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -24,12 +27,17 @@ import com.cjt_pc.vehicleregulatoryestimate.entity.DisImgItem;
 import com.cjt_pc.vehicleregulatoryestimate.entity.UploadImageEntity;
 import com.cjt_pc.vehicleregulatoryestimate.entity.UploadPgrwInfo;
 import com.cjt_pc.vehicleregulatoryestimate.my_view.MyTitleView;
+import com.cjt_pc.vehicleregulatoryestimate.utils.ImageCompressUtil;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SystemUtil;
+import com.squareup.picasso.Picasso;
 
 import org.litepal.crud.DataSupport;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -135,11 +143,11 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
         for (UploadImageEntity info : uploadImgList) {
             int index = Integer.parseInt(info.getFilewz());
             if (index <= itemList.size()) {
-                itemList.get(index - 1).setImgPath(info.getFilepath());
+                itemList.get(index - 1).setImgPath(info.getFilerealpath());
             } else {
                 // 如果超出固定Item数目，则new一个item出来
                 DisImgItem item = new DisImgItem();
-                item.setImgPath(info.getFilepath());
+                item.setImgPath(info.getFilerealpath());
                 itemList.add(item);
             }
         }
@@ -318,6 +326,8 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
                 itemList.get(gvIndex - 1).setImgTips("");
                 addAddItem();
             }
+            // 每次拍完照片清楚该图片缓存
+            Picasso.with(this).invalidate(pic);
             adapter.notifyDataSetChanged();
             // 在拍完照片回来时如果gv是隐藏的要执行hideSv方法
             if (gvDisImg.getVisibility() == View.GONE) {
@@ -335,7 +345,7 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
             String imgPath = cursor.getString(1); // 图片文件路径
             cursor.close();
             // 在获取到所选相册图片路径后复制图片到指定路径
-            fileChannelCopy(new File(imgPath), pic);
+            ImageCompressUtil.compressPic(new File(imgPath), pic);
         }
     }
 
@@ -374,23 +384,37 @@ public class DisImgActivity extends Activity implements AdapterView.OnItemClickL
     savePicWithSysCamera(File pic) {
         File imgCache = new File(Environment.getExternalStorageDirectory() + "/image.jpg");
         if (imgCache.exists()) {
-            fileChannelCopy(imgCache, pic);
+            ImageCompressUtil.compressPic(imgCache, pic);
         } else {
             Toast.makeText(this, "保存图片出现未知错误！", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void savePicToDB(File pic) {
-        // 实例化一个UploadImageEntity保存至数据库
+        // 获取当前任务实体类
+        UploadPgrwInfo uploadPgrwInfo = DataSupport.find(UploadPgrwInfo.class, taskId);
+        // 查找当前任务当前位置的图片集合
+        List<UploadImageEntity> infos = DataSupport.where("djh = ? and filefl = ? and filewz = ?",
+                uploadPgrwInfo.getPgdh(),
+                getFileFl(llIndex) + "",
+                gvIndex + "")
+                .find(UploadImageEntity.class);
+        // 集合不会空说明之前已经有图了，要删掉再保存
+        if (!infos.isEmpty()) {
+            for (UploadImageEntity entity : infos) {
+                DataSupport.delete(UploadImageEntity.class, entity.getId());
+                Picasso.with(this).invalidate(entity.getFilerealpath());
+            }
+        }
         UploadImageEntity uploadImageEntity = new UploadImageEntity();
+        uploadImageEntity.setDjh(uploadPgrwInfo.getPgdh());
         uploadImageEntity.setFilefl(getFileFl(llIndex));
         uploadImageEntity.setExfile(".jpg");
         uploadImageEntity.setFilewz(gvIndex + "");
-        uploadImageEntity.setFilepath(pic.getAbsolutePath());
+        uploadImageEntity.setFilerealpath(pic.getAbsolutePath());
         uploadImageEntity.setFilenames(pic.getName());
         uploadImageEntity.save();
 
-        UploadPgrwInfo uploadPgrwInfo = DataSupport.find(UploadPgrwInfo.class, taskId);
         uploadPgrwInfo.getImageEntityList().add(uploadImageEntity);
         uploadPgrwInfo.save();
     }

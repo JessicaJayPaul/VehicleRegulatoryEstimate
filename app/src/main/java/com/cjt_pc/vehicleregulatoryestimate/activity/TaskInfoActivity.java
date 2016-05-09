@@ -31,16 +31,19 @@ import com.cjt_pc.vehicleregulatoryestimate.entity.User;
 import com.cjt_pc.vehicleregulatoryestimate.my_view.MyTitleView;
 import com.cjt_pc.vehicleregulatoryestimate.sortlistview.ChooseCarInfo;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SoapCallBackListener;
+import com.cjt_pc.vehicleregulatoryestimate.utils.SoapConfig;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SoapUtil;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SystemUtil;
 
 import org.kobjects.base64.Base64;
 import org.ksoap2.serialization.SoapObject;
 import org.litepal.crud.DataSupport;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -52,6 +55,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -160,6 +164,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 taskId = pgrwInfo.getId();
                 getUpLoadListNew();
                 curTaskStatus = ONLINE_TASK;
+                // 若返回的zt为""则任务可以编辑
                 if (pgrwInfo.getZt().equals("")) {
                     isEditable = true;
                 } else {
@@ -323,8 +328,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 @Override
                 public void onError(Exception e) {
                     dialog.dismiss();
-                    Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
+                    Toast.makeText(TaskInfoActivity.this, "请检查网络连接...", Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
@@ -363,8 +367,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 @Override
                 public void onError(Exception e) {
                     dialog.dismiss();
-                    Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
+                    Toast.makeText(TaskInfoActivity.this, "请检查网络连接...", Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
@@ -402,8 +405,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 @Override
                 public void onError(Exception e) {
                     dialog.dismiss();
-                    Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
+                    Toast.makeText(TaskInfoActivity.this, "请检查网络连接...", Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
@@ -425,12 +427,16 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                     for (int i = 0; i < soapObject.getPropertyCount(); i++) {
                         UploadImageEntity uploadImageEntity = new UploadImageEntity();
                         SoapObject object = (SoapObject) soapObject.getProperty(i);
+                        uploadImageEntity.setDjh(object.getPrimitivePropertyAsString("djh").trim());
                         String filefl = object.getPrimitivePropertyAsString("filefl").trim();
                         uploadImageEntity.setFilefl(filefl);
                         uploadImageEntity.setScr(object.getPrimitivePropertyAsString("scr"));
                         uploadImageEntity.setFilesize(object.getPrimitivePropertyAsString("filesize"));
-                        String filepath = "http://61.183.41.211:8883/" + returnPath(object.getPrimitivePropertyAsString("filepath"));
-                        uploadImageEntity.setFilepath(filepath);
+                        // 供编辑上传之用
+                        uploadImageEntity.setFilepath(object.getPrimitivePropertyAsString("filepath"));
+                        // 缩略图路径，供显示之用
+                        String filepath = SoapConfig.BASE_URL + returnPath(object.getPrimitivePropertyAsString("filepath"));
+                        uploadImageEntity.setFilerealpath(filepath);
                         String filewz = object.getPrimitivePropertyAsString("filewz");
                         uploadImageEntity.setFilewz(filewz);
                         uploadImageEntity.setScrq("2015-07-14");
@@ -444,12 +450,11 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 @Override
                 public void onError(Exception e) {
                     dialog.dismiss();
-                    Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
+                    Toast.makeText(TaskInfoActivity.this, "请检查网络连接...", Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
-            Toast.makeText(this, "网络异常", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "请检查网络连接...", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -533,6 +538,10 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
     // 若不是新建任务当初始化各个控件初始值，且使每个控件都不可点击
     private void initValue() {
+        if (pgrwInfo.getCx().equals("请选择车型")) {
+            pgrwInfo.setPpmc("请选择品牌");
+            pgrwInfo.setPxmc("请选择车系");
+        }
         for (int i = 0; i < views.length; i++) {
             switch (i + 1) {
                 // 日期
@@ -722,7 +731,6 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
                 if (!isEditing) {
                     if (curTaskStatus == ONLINE_TASK) {
                         pgrwInfo.setEdit(true);
-                        curTaskStatus = LOCAL_TASK;
                     }
                     ibtEdit.setImageResource(R.mipmap.edit_btn_gray);
                     // 将isEditing = true;写到getCXing的onFinish中，避免线程的干扰
@@ -857,43 +865,48 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
     // 上传之前，若没有编辑检查各约束
     private boolean checkTaskBeforeUpload() {
-        String[] strTemp = {pgrwInfo.getCzmc(), pgrwInfo.getCphm(), pgrwInfo.getPl(), pgrwInfo.getGl(), pgrwInfo.getFdjh(),
-                pgrwInfo.getCjhm(), pgrwInfo.getXslc(), pgrwInfo.getCpxh(), pgrwInfo.getCllx(),
-                pgrwInfo.getDkcs(), pgrwInfo.getZw(), pgrwInfo.getTbrsj(), pgrwInfo.getEscysjg()};
-        for (String temp : strTemp) {
-            if (TextUtils.isEmpty(temp)) {
-                Toast.makeText(this, "相关信息不能为空！", Toast.LENGTH_SHORT).show();
-                return false;
-            }
-        }
+//        String[] strTemp = {pgrwInfo.getCzmc(), pgrwInfo.getCphm(), pgrwInfo.getPl(), pgrwInfo.getGl(), pgrwInfo.getFdjh(),
+//                pgrwInfo.getCjhm(), pgrwInfo.getXslc(), pgrwInfo.getCpxh(), pgrwInfo.getCllx(),
+//                pgrwInfo.getDkcs(), pgrwInfo.getZw(), pgrwInfo.getTbrsj(), pgrwInfo.getEscysjg()};
+//        for (String temp : strTemp) {
+//            if (TextUtils.isEmpty(temp)) {
+//                Toast.makeText(this, "相关信息不能为空！", Toast.LENGTH_SHORT).show();
+//                return false;
+//            }
+//        }
         // 车排量限制
-        try {
-            Double pl = Double.parseDouble(pgrwInfo.getPl());
-            if (pl > 10) {
-                Toast.makeText(this, "排量必须小于10！", Toast.LENGTH_SHORT).show();
-                return false;
-            }
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "排量必须为数字！", Toast.LENGTH_SHORT).show();
-            return false;
-        }
+//        try {
+//            Double pl = Double.parseDouble(pgrwInfo.getPl());
+//            if (pl > 10) {
+//                Toast.makeText(this, "排量必须小于10！", Toast.LENGTH_SHORT).show();
+//                return false;
+//            }
+//        } catch (NumberFormatException e) {
+//            Toast.makeText(this, "排量必须为数字！", Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
         // 功率限制
-        try {
-            int temp = Integer.parseInt(pgrwInfo.getGl());
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "功率必须为数字！", Toast.LENGTH_SHORT).show();
-            return false;
-        }
+//        try {
+//            int temp = Integer.parseInt(pgrwInfo.getGl());
+//        } catch (NumberFormatException e) {
+//            Toast.makeText(this, "功率必须为数字！", Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
         // 车架号限制
-        if (pgrwInfo.getCjhm().length() > 17) {
-            Toast.makeText(this, "车架号码必须不大于17位！", Toast.LENGTH_SHORT).show();
-            return false;
-        }
+//        if (pgrwInfo.getCjhm().length() > 17) {
+//            Toast.makeText(this, "车架号码必须不大于17位！", Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
         // 公里数限制
-        try {
-            int temp = Integer.parseInt(pgrwInfo.getXslc());
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "公里数必须为数字！", Toast.LENGTH_SHORT).show();
+//        try {
+//            int temp = Integer.parseInt(pgrwInfo.getXslc());
+//        } catch (NumberFormatException e) {
+//            Toast.makeText(this, "公里数必须为数字！", Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
+        // 电话号码限制
+        if (TextUtils.isEmpty(pgrwInfo.getTbrsj())) {
+            Toast.makeText(this, "填报人手机不能为空！", Toast.LENGTH_SHORT).show();
             return false;
         }
         // 日期限制
@@ -910,11 +923,19 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             return false;
         }
         // 座位限制
-        try {
-            int temp = Integer.parseInt(pgrwInfo.getZw());
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "座位必须为数字！", Toast.LENGTH_SHORT).show();
-            return false;
+//        try {
+//            int temp = Integer.parseInt(pgrwInfo.getZw());
+//        } catch (NumberFormatException e) {
+//            Toast.makeText(this, "座位必须为数字！", Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
+        // 车辆相关信息限制
+        if (TextUtils.isEmpty(pgrwInfo.getPp())) {
+            pgrwInfo.setPp("1");
+            pgrwInfo.setPx("1");
+            pgrwInfo.setCx("1");
+//            Toast.makeText(this, "没有选择车辆相关信息！", Toast.LENGTH_SHORT).show();
+//            return false;
         }
         // 预售价格限制
         try {
@@ -925,10 +946,6 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             }
         } catch (NumberFormatException e) {
             Toast.makeText(this, "预售价格必须为数字！", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        if (cppList.isEmpty()) {
-            Toast.makeText(this, "没有选择车辆相关信息！", Toast.LENGTH_SHORT).show();
             return false;
         }
         return true;
@@ -944,18 +961,18 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
 
     private void setPgrwInfo() {
         // 我也不知道为毛非要重新冲数据库找一次才不会新增数据，直接覆盖
-        pgrwInfo.setCzmc(et_1.getText().toString());
-        pgrwInfo.setCphm(et_2.getText().toString());
-        pgrwInfo.setPl(et_3.getText().toString());
-        pgrwInfo.setGl(et_4.getText().toString());
-        pgrwInfo.setFdjh(et_5.getText().toString());
+        pgrwInfo.setCzmc(TextUtils.isEmpty(et_1.getText().toString()) ? "1" : et_1.getText().toString());
+        pgrwInfo.setCphm(TextUtils.isEmpty(et_2.getText().toString()) ? "1" : et_2.getText().toString());
+        pgrwInfo.setPl(TextUtils.isEmpty(et_3.getText().toString()) ? "1" : et_3.getText().toString());
+        pgrwInfo.setGl(TextUtils.isEmpty(et_4.getText().toString()) ? "1" : et_4.getText().toString());
+        pgrwInfo.setFdjh(TextUtils.isEmpty(et_5.getText().toString()) ? "1" : et_5.getText().toString());
         pgrwInfo.setHbbz(sp_6.getSelectedItem().toString());
-        pgrwInfo.setCjhm(et_7.getText().toString());
-        pgrwInfo.setXslc(et_8.getText().toString());
+        pgrwInfo.setCjhm(TextUtils.isEmpty(et_7.getText().toString()) ? "1" : et_7.getText().toString());
+        pgrwInfo.setXslc(TextUtils.isEmpty(et_8.getText().toString()) ? "1" : et_8.getText().toString());
         pgrwInfo.setCcrq(tv_9.getText().toString());
         pgrwInfo.setDjrq(tv_10.getText().toString());
-        pgrwInfo.setCpxh(et_11.getText().toString());
-        pgrwInfo.setCllx(et_12.getText().toString());
+        pgrwInfo.setCpxh(TextUtils.isEmpty(et_11.getText().toString()) ? "1" : et_11.getText().toString());
+        pgrwInfo.setCllx(TextUtils.isEmpty(et_12.getText().toString()) ? "1" : et_12.getText().toString());
         pgrwInfo.setPpmc(tv_13.getText().toString());
         pgrwInfo.setPxmc(tv_14.getText().toString());
         pgrwInfo.setCx(tv_15.getText().toString());
@@ -965,8 +982,8 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
             pgrwInfo.setCxdm(cxingIdList.get(cxingList.indexOf(tv_15.getText().toString())));
         }
         pgrwInfo.setSyxz(sp_16.getSelectedItem().toString());
-        pgrwInfo.setDkcs(et_17.getText().toString());
-        pgrwInfo.setZw(et_18.getText().toString());
+        pgrwInfo.setDkcs(TextUtils.isEmpty(et_17.getText().toString()) ? "1" : et_17.getText().toString());
+        pgrwInfo.setZw(TextUtils.isEmpty(et_18.getText().toString()) ? "1" : et_18.getText().toString());
         pgrwInfo.setTbrsj(et_19.getText().toString());
         pgrwInfo.setEscysjg(et_20.getText().toString());
         pgrwInfo.setZdr(User.getUserInstance().getZdr());
@@ -980,7 +997,7 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         pgrwInfo.save();
     }
 
-    private class UploadTask extends AsyncTask<Void, Void, Void> {
+    private class UploadTask extends AsyncTask<Void, Void, Boolean> {
 
         ProgressDialog dialog;
 
@@ -993,48 +1010,38 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         }
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Boolean doInBackground(Void... params) {
             try {
-                uploadImage();
+                uploadPgrwImgList();
                 uploadPgrwInfo();
             } catch (Exception e) {
-                dialog.dismiss();
-                Toast.makeText(TaskInfoActivity.this, "未知错误！", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
+                return false;
             }
-            return null;
+            return true;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            Toast.makeText(TaskInfoActivity.this, "上传成功！", Toast.LENGTH_SHORT).show();
-            // 删除本地数据的数据，并且删掉当前任务在本地存储图片的文件夹
-            if (curTaskStatus == LOCAL_TASK) {
-                DataSupport.delete(UploadPgrwInfo.class, taskId);
-                // 若当前是新建任务，且没有保存就删掉存储到本地的图片文件夹
-                String imgListPath = Environment.getExternalStorageDirectory().getPath()
-                        + "/jiuche" + "/imgDir" + taskId;
-                deleteDir(new File(imgListPath));
+        protected void onPostExecute(Boolean isSucceed) {
+            if (isSucceed) {
+                Toast.makeText(TaskInfoActivity.this, "上传成功！", Toast.LENGTH_SHORT).show();
+                // 如果是本地任务，或者是刚编辑在线的任务保存直接上传，则
+                // 从本地数据库中删除数据，并且删掉当前任务在本地存储图片的文件夹
+                if (curTaskStatus == LOCAL_TASK || pgrwInfo.isEdit()) {
+                    DataSupport.delete(UploadPgrwInfo.class, taskId);
+                    // 若当前是新建任务，且没有保存就删掉存储到本地的图片文件夹
+                    String imgListPath = Environment.getExternalStorageDirectory().getPath()
+                            + "/jiuche" + "/imgDir" + taskId;
+                    deleteDir(new File(imgListPath));
+                }
+                dialog.dismiss();
+                Intent intent = new Intent();
+                setResult(MainActivity.UPLOAD, intent);
+                TaskInfoActivity.this.finish();
+            } else {
+                dialog.dismiss();
+                Toast.makeText(TaskInfoActivity.this, "网络异常，上传失败！", Toast.LENGTH_SHORT).show();
             }
-            dialog.dismiss();
-            Intent intent = new Intent();
-            setResult(MainActivity.UPLOAD, intent);
-            TaskInfoActivity.this.finish();
         }
-    }
-
-    private byte[] readStream(InputStream inStream) throws Exception {
-        byte[] buffer = new byte[1024];
-        int len;
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        while ((len = inStream.read(buffer)) != -1) {
-            outStream.write(buffer, 0, len);
-        }
-        byte[] data = outStream.toByteArray();
-        outStream.close();
-        inStream.close();
-        return data;
-
     }
 
     private byte[] subBytes(byte[] src, int begin, int count) {
@@ -1044,81 +1051,61 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         } else {
             bs = new byte[src.length - begin];
         }
-        for (int i = begin; i < begin + count && i < src.length; i++) bs[i - begin] = src[i];
+        for (int i = begin; i < begin + count && i < src.length; i++)
+            bs[i - begin] = src[i];
         return bs;
     }
 
-    private void uploadImage() throws Exception {
+    // 将文件转为字节数组
+    public byte[] getByteArr(File file) throws IOException {
+        FileInputStream fis = new FileInputStream(file);
+        byte[] buffer = new byte[1024];
+        int len;
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        while ((len = fis.read(buffer)) != -1) {
+            outStream.write(buffer, 0, len);
+        }
+        byte[] data = outStream.toByteArray();
+        outStream.close();
+        fis.close();
+        return data;
+    }
+
+    private void uploadPgrwImgList() throws Exception {
         List<UploadImageEntity> imgList = DataSupport.where("uploadpgrwinfo_id = ?", taskId + "")
                 .find(UploadImageEntity.class);
         UploadPgrwInfo uploadPgrwInfo = DataSupport.find(UploadPgrwInfo.class, taskId);
         for (int i = 0; i < imgList.size(); i++) {
             UploadImageEntity uploadImageEntity = imgList.get(i);
             uploadImageEntity.setDjh(uploadPgrwInfo.getOlddjh());
-            File imgFile = new File(uploadImageEntity.getFilepath());
+            File imgFile = new File(uploadImageEntity.getFilerealpath());
+            // 如果文件不存在说明读自网络，不用上传
             if (!imgFile.exists()) {
                 continue;
             }
-            InputStream in = new FileInputStream(imgFile);
+            byte[] bytes = getByteArr(imgFile);
+            // 以块状上传，单位是32kb，不足一块补1
             int blockSize = 1024 * 1024;
-            byte[] bytes = readStream(in);
-            int block = bytes.length / blockSize + 1;
-            Date date = Calendar.getInstance().getTime();
-            String dateString = new SimpleDateFormat("yyyyMM", Locale.CHINA).format(date);
+            int bCount = bytes.length / blockSize + 1;
+            String dateString = new SimpleDateFormat("yyyyMM", Locale.CHINA).format(new Date());
             String imgName = uploadPgrwInfo.getOlddjh() + "_" + uploadImageEntity.getFilefl() + uploadImageEntity.getFilewz() + ".jpg";
             String fullPath = "Upload/IMG/" + dateString + "/" + imgName;
-            for (int j = 0; j < block; j++) {
+            for (int j = 0; j < bCount; j++) {
+                LinkedHashMap<String, Object> properties = new LinkedHashMap<>();
                 byte[] buffer;
                 buffer = subBytes(bytes, j * blockSize, blockSize);
-                String blockS = "00000000" + j + "-" + block;
-                String overWrite = j == 0 ? "true" : "false";
+                String blockS = "00000000" + j + "-" + bCount;
                 String blockStr = blockS.substring(blockS.length() - 11, blockS.length());
+                properties.put("FullPath", fullPath + "." + blockStr);
                 String data = "";
                 if (buffer.length > 0) {
                     data = Base64.encode(buffer);
                 }
-                String parameterData = "<?xml version='1.0' encoding='UTF-8'?>" +
-                        "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
-                        "<soapenv:Body>" +
-                        "<BeginUpload xmlns=\"http://tempuri.org/\">" +
-                        "<FullPath>" +
-                        fullPath + "." + blockStr +
-                        "</FullPath>" +
-                        "<FileContext>" +
-                        data +
-                        "</FileContext>" +
-                        "<Overwrite>" +
-                        overWrite +
-                        "</Overwrite>" +
-                        "</BeginUpload>" +
-                        "</soapenv:Body>" +
-                        "</soapenv:Envelope>";
-
-                try {
-                    URL localURL = new URL("http://61.183.41.211:8883/WCFService/UpLoad/UpLoad.svc?wsdl");
-                    HttpURLConnection connection = (HttpURLConnection) localURL.openConnection();
-                    connection.setConnectTimeout(60000);
-                    connection.setReadTimeout(60000);
-                    connection.setDoInput(true);
-                    connection.setDoOutput(true);
-                    connection.setUseCaches(false);
-                    connection.setDefaultUseCaches(false);
-                    //Referer: http://61.183.41.211:8882/ClientBin/SLUI.xap
-                    connection.setRequestProperty("Referer-Type", "http://61.183.41.211:8882/ClientBin/SLUI.xap");
-                    connection.setRequestProperty("Content-Type", "text/xml ; charset=UTF-8");
-                    connection.setRequestProperty("SOAPAction", "http://tempuri.org/IUpLoad/BeginUpload");
-                    connection.setRequestProperty("Content-Length", String.valueOf(parameterData.length()));
-                    connection.setRequestMethod("POST");
-                    OutputStream outputStream = connection.getOutputStream();
-                    byte[] b = parameterData.getBytes("utf-8");
-                    outputStream.write(b, 0, b.length);
-                    outputStream.flush();
-                    outputStream.close();
-                    InputStream inputStream = connection.getInputStream();
-                    inputStream.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                properties.put("FileContext", data);
+                String overWrite = j == 0 ? "true" : "false";
+                properties.put("Overwrite", overWrite);
+                // 开始上传
+                SoapUtil.postSoapRequest(properties, "BeginUpload", null);
             }
             uploadImageEntity.setFilepath(fullPath);
             uploadImageEntity.setScr(User.getUserInstance().getZdr());
@@ -1130,13 +1117,14 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void uploadPgrwImgList() {
-
-    }
-
-    private void uploadPgrwInfo() {
+    private void uploadPgrwInfo() throws IOException, XmlPullParserException {
         if (isEditing) {
             setPgrwInfo();
+        }
+        if (cppList.isEmpty()) {
+            pgrwInfo.setPp("1");
+            pgrwInfo.setPx("1");
+            pgrwInfo.setCxdm("1");
         }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
         pgrwInfo.setTjrq(sdf.format(new Date()));
@@ -1158,16 +1146,6 @@ public class TaskInfoActivity extends Activity implements View.OnClickListener {
         } else {
             properties.put("czfs", "creat");
         }
-        SoapUtil.postSoapRequest(properties, "SavePgrw", new SoapCallBackListener() {
-            @Override
-            public void onFinish(SoapObject soapObject) {
-                String returnValue = soapObject.getPrimitivePropertyAsString("ReturnValue");
-            }
-
-            @Override
-            public void onError(Exception e) {
-
-            }
-        });
+        SoapUtil.postSoapRequest(properties, "SavePgrw", null);
     }
 }

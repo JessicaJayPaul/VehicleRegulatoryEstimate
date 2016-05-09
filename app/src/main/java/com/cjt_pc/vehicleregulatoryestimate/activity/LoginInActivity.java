@@ -6,9 +6,9 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -17,7 +17,6 @@ import android.widget.Toast;
 
 import com.cjt_pc.vehicleregulatoryestimate.R;
 import com.cjt_pc.vehicleregulatoryestimate.entity.User;
-import com.cjt_pc.vehicleregulatoryestimate.utils.SoapCallBackListener;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SoapUtil;
 import com.cjt_pc.vehicleregulatoryestimate.utils.SystemUtil;
 import com.pgyersdk.javabean.AppBean;
@@ -38,7 +37,7 @@ public class LoginInActivity extends Activity implements View.OnClickListener {
     CheckBox cbRemember;
     Button btLogin;
     private SharedPreferences preferences;
-
+    private SharedPreferences.Editor editor;
     private ProgressDialog progressDialog;
 
     @Override
@@ -91,7 +90,7 @@ public class LoginInActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        String account = etAccount.getText().toString();
+        String account = etAccount.getText().toString().trim();
         String pwd = etPwd.getText().toString();
         if (v.getId() == R.id.login) {
             if (!TextUtils.isEmpty(account) && !TextUtils.isEmpty(pwd)) {
@@ -102,7 +101,8 @@ public class LoginInActivity extends Activity implements View.OnClickListener {
                         progressDialog.setCancelable(false);
                         progressDialog.show();
                     }
-                    callLoginIn(account, pwd);
+//                    callLoginIn(account, pwd);
+                    new LoginInTask(account, pwd).execute();
                 } else {
                     Toast.makeText(this, "请检查网络连接...", Toast.LENGTH_SHORT).show();
                 }
@@ -112,57 +112,63 @@ public class LoginInActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void callLoginIn(final String account, final String pwd) {
-        LinkedHashMap<String, Object> properties = new LinkedHashMap<>();
-        properties.put("TrueName", account);
-        properties.put("Pwd", pwd);
-        SoapUtil.postSoapRequest(this, properties, "LoginIn", new SoapCallBackListener() {
-            @Override
-            public void onFinish(SoapObject soapObject) {
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putString("account", account);
-                editor.apply();
-                if (soapObject.getPropertyCount() == 0) {
-                    failedLogin();
-                } else {
-                    succeedLogin(editor, pwd, soapObject);
-                }
-            }
-
-            @Override
-            public void onError(Exception e) {
-                Log.e("cjt-pc", e.toString());
-            }
-        });
-    }
-
     // 登陆失败
     private void failedLogin() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (progressDialog != null) {
-                    progressDialog.dismiss();
-                }
-                Toast.makeText(LoginInActivity.this,
-                        "账号或者密码错误，请仔细核对！", Toast.LENGTH_SHORT).show();
-            }
-        });
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+        }
+        Toast.makeText(LoginInActivity.this,
+                "账号或者密码错误，请仔细核对！", Toast.LENGTH_SHORT).show();
     }
 
     // 登陆成功
-    private void succeedLogin(SharedPreferences.Editor editor, String pwd, SoapObject soapObject) {
+    private void succeedLogin() {
+        editor = preferences.edit();
         if (cbRemember.isChecked()) {
-            editor.putString("pwd", pwd);
+            editor.putString("pwd", etPwd.getText().toString().trim());
             editor.putBoolean("is_remember", true);
         } else {
             editor.putBoolean("is_remember", false);
         }
         editor.apply();
-        User.getUserInstance().setZdr(soapObject.getPrimitivePropertyAsString("grdm"));
         Intent intent = new Intent(LoginInActivity.this, MainActivity.class);
         startActivity(intent);
         progressDialog.dismiss();
         this.finish();
+    }
+
+    /**
+     * 登陆异步任务
+     */
+    public class LoginInTask extends AsyncTask<Void, Void, SoapObject> {
+
+        String account, pwd;
+
+        public LoginInTask(String account, String pwd) {
+            this.account = account;
+            this.pwd = pwd;
+        }
+
+        @Override
+        protected SoapObject doInBackground(Void... params) {
+            editor = preferences.edit();
+            editor.putString("account", account);
+            editor.apply();
+            LinkedHashMap<String, Object> properties = new LinkedHashMap<>();
+            properties.put("TrueName", account);
+            properties.put("Pwd", pwd);
+            return SoapUtil.postSoapRequest("LoginIn", properties);
+        }
+
+        @Override
+        protected void onPostExecute(SoapObject soapObject) {
+            if (soapObject.getPropertyCount() == 0) {
+                failedLogin();
+            } else {
+                // 登陆成功
+                User.getUserInstance().setZdr(soapObject.getPrimitivePropertyAsString("grdm"));
+                succeedLogin();
+            }
+        }
     }
 }
